@@ -1,0 +1,1 @@
+The first dataset is kddcup, which is a classic, well-known data source for attack detection research. Please download the data and read about its details at the source website: https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html 

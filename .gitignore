@@ -1,3 +1,14 @@
+# Ours
+
+.idea
+data/dataset-1/*
+data/dataset-2/*
+data/dataset-3/*
+!data/dataset-1/readme.txt
+!data/dataset-2/readme.txt
+!data/dataset-3/readme.txt
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

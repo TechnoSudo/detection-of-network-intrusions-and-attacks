@@ -1,1 +1,4 @@
-The third dataset is cores-iot, which is a newer data source for attack detection research. The data is available in the csv file, and it contains two classes: 0 and 1, where 0 is a normal sample and 1 is an attack sample. The class is the last column. 
+The third dataset is cores-iot, which is a newer data source for attack detection research. 
+The data is available in the csv file, and it contains two classes: 0 and 1, 
+where 0 is a normal sample and 1 is an attack sample. 
+The class is the last column. 

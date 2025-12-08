@@ -1,0 +1,10 @@
+{
+  "dataset": "KDD'99",
+  "scenario": "scenario_1_all_attacks_known",
+  "metrics": {
+    "f1": 0.9999741013706319,
+    "precision": 0.9999974525343462,
+    "recall": 0.9999507512974486,
+    "bac": 0.9999702357404203
+  }
+}

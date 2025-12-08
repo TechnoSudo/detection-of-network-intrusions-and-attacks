@@ -1,0 +1,36 @@
+{
+  "dataset": "KDD'99",
+  "scenario": "scenario_3_evolving_attacks",
+  "summary": {
+    "rf": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.8839137645107794,
+      "mean_post": 0.6651769087523277,
+      "mean_overall": 0.8496968910877025
+    },
+    "xgb": {
+      "mean_pre": 0.9991596638655462,
+      "mean_onset": 0.8839137645107794,
+      "mean_post": 0.6659135570027882,
+      "mean_overall": 0.8496623284597047
+    },
+    "sgd_static": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.8877354493403553,
+      "mean_post": 0.6930653440168764,
+      "mean_overall": 0.860266931119077
+    },
+    "sgd_adaptive": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.8714655384220095,
+      "mean_post": 0.9440642010610762,
+      "mean_overall": 0.9385099131610287
+    },
+    "ensemble": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.884742951907131,
+      "mean_post": 0.6673787584679897,
+      "mean_overall": 0.8507072367917071
+    }
+  }
+}

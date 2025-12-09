@@ -89,8 +89,15 @@ def load_and_prepare_kdd(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]
 def load_and_prepare_netflow(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
     df = pd.read_csv(path)
 
-    # Attack type and binary label
-    y_attack_type = df["ANOMALY"].astype(str)
+    y_attack_type = df["ANOMALY"].astype(str).str.strip()
+
+    # Normalize all "no attack" cases
+    y_attack_type = y_attack_type.replace(
+        "<null>",
+        "None"
+    )
+
+    # Binary label: 0 = normal, 1 = attack
     y = (y_attack_type != "None").astype(int)
 
     # Drop identifiers

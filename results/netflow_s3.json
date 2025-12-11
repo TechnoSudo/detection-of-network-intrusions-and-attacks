@@ -1,0 +1,36 @@
+{
+  "dataset": "NetFlow v9",
+  "scenario": "scenario_3_evolving_attacks",
+  "summary": {
+    "rf": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.8846269772268375,
+      "mean_post": 0.6662983425414366,
+      "mean_overall": 0.8503084399227582
+    },
+    "xgb": {
+      "mean_pre": 1.0,
+      "mean_onset": 0.8847917276363282,
+      "mean_post": 0.6662983425414366,
+      "mean_overall": 0.8503633567259217
+    },
+    "sgd_static": {
+      "mean_pre": 0.9488737020994993,
+      "mean_onset": 0.8466319560804626,
+      "mean_post": 0.6501805182444531,
+      "mean_overall": 0.815228725474805
+    },
+    "sgd_adaptive": {
+      "mean_pre": 0.9517632867167765,
+      "mean_onset": 0.936462425128626,
+      "mean_post": 0.9783176650700692,
+      "mean_overall": 0.955514458971824
+    },
+    "ensemble": {
+      "mean_pre": 0.9991596638655462,
+      "mean_onset": 0.8820221396713774,
+      "mean_post": 0.6655616942909761,
+      "mean_overall": 0.8489144992759665
+    }
+  }
+}

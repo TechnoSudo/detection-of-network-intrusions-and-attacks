@@ -1,17 +1,31 @@
 from typing import Tuple
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 
+def preprocess_features(X_train, X_test):
 
-def preprocess_features(
-    X_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-) -> Tuple[np.ndarray, np.ndarray, StandardScaler]:
+    print("[preprocess] Before cleaning: ",
+          X_train.isna().sum().sum(),
+          X_test.isna().sum().sum())
+
+    X_train = X_train.replace([np.inf, -np.inf], 0.0).fillna(0.0)
+    X_test = X_test.replace([np.inf, -np.inf], 0.0).fillna(0.0)
+
+    print("[preprocess] After cleaning: ",
+          X_train.isna().sum().sum(),
+          X_test.isna().sum().sum())
+
     scaler = StandardScaler()
     X_train_std = scaler.fit_transform(X_train)
     X_test_std = scaler.transform(X_test)
+
+    print("[preprocess] After scaling: ",
+          np.isnan(X_train_std).sum(),
+          np.isnan(X_test_std).sum())
+
     return X_train_std, X_test_std, scaler
+
 
 
 def load_and_prepare_kdd(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
@@ -87,43 +101,69 @@ def load_and_prepare_kdd(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]
 
 
 def load_and_prepare_netflow(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
+    print(f"[NetFlow] Loading file: {path}")
     df = pd.read_csv(path)
+    print(f"[NetFlow] Raw shape: {df.shape}")
 
-    y_attack_type = df["ANOMALY"].astype(str).str.strip()
+    # 1) Attack TYPE from ALERT (string)
+    if "ALERT" not in df.columns:
+        raise ValueError("NetFlow file must contain an 'ALERT' column.")
 
-    # Normalize all "no attack" cases
+    y_attack_type = df["ALERT"].astype(str).str.strip()
+
+    # Normalize "no attack" labels
     y_attack_type = y_attack_type.replace(
-        "<null>",
-        "None"
+        {
+            "<null>": "None",
+            "nan": "None",
+            "NaN": "None",
+        }
     )
 
-    # Binary label: 0 = normal, 1 = attack
+    print("[NetFlow] Unique ALERT / attack types:", y_attack_type.unique())
+
+    # 2) Binary label: 0 = normal, 1 = attack
+    #   Anything that is NOT "None" is considered an attack
     y = (y_attack_type != "None").astype(int)
 
-    # Drop identifiers
+    # 3) Drop identifiers + label columns from features
     drop_cols = [
         "FLOW_ID",
         "IPV4_SRC_ADDR",
         "IPV4_DST_ADDR",
         "ANALYSIS_TIMESTAMP",
         "ID",
-        "ANOMALY",
+        "ANOMALY",   # numeric flag – we don't want to leak it
+        "ALERT",     # attack type – label, not feature
     ]
     drop_cols = [c for c in drop_cols if c in df.columns]
     df_features = df.drop(columns=drop_cols)
 
-    # Encode PROTOCOL_MAP if present
-    if "PROTOCOL_MAP" in df_features.columns:
-        proto_map = df_features["PROTOCOL_MAP"].astype(str)
-        proto_dummies = pd.get_dummies(proto_map, prefix="proto")
-        df_features = pd.concat(
-            [df_features.drop(columns=["PROTOCOL_MAP"]), proto_dummies],
-            axis=1,
-        )
+    # 4) Split numeric vs categorical
+    num_cols = df_features.select_dtypes(include=["number"]).columns.tolist()
+    cat_cols = [c for c in df_features.columns if c not in num_cols]
 
-    X = df_features.astype(float)
+    X_num = df_features[num_cols]
+
+    if cat_cols:
+        X_cat = pd.get_dummies(df_features[cat_cols].astype(str))
+        X = pd.concat([X_num, X_cat], axis=1)
+    else:
+        X = X_num.copy()
+
+    print(f"[NetFlow] Feature matrix shape before cleaning: {X.shape}")
+    print(f"[NetFlow] NaNs before cleaning: {X.isna().sum().sum()}")
+
+    # 5) Clean NaNs / inf
+    X = X.replace([np.inf, -np.inf], 0.0)
+    X = X.fillna(0.0)
+
+    print(f"[NetFlow] NaNs after cleaning: {X.isna().sum().sum()}")
+
+    X = X.astype(float)
 
     return X, y, y_attack_type
+
 
 
 def load_and_prepare_cores_iot(path: str) -> Tuple[pd.DataFrame, pd.Series]:

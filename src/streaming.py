@@ -1,6 +1,6 @@
 from typing import Dict, List, Tuple
-import numpy as np
 import pandas as pd
+import numpy as np
 
 
 def build_attack_pools(
@@ -11,21 +11,46 @@ def build_attack_pools(
     new_attacks: List[str],
 ) -> Dict[str, Tuple[pd.DataFrame, pd.Series]]:
 
-    is_normal = (y_attack_type == "normal") | (y == 0)
+    normal_like = y_attack_type.astype(str).str.lower().isin(["normal", "none"])
+    is_normal = (y == 0) | normal_like
+
+    # Known/new attacks based on the attack-type labels
     is_known = y_attack_type.isin(known_attacks)
     is_new = y_attack_type.isin(new_attacks)
+
     X_normal = X.loc[is_normal]
     y_normal = y.loc[is_normal]
+
     X_known = X.loc[is_known]
     y_known = y.loc[is_known]
+
     X_new = X.loc[is_new]
     y_new = y.loc[is_new]
+
+    # ---- Debug prints so you see what's going on ----
+    print("\n[DEBUG] build_attack_pools:")
+    print("  known_attacks =", known_attacks)
+    print("  new_attacks   =", new_attacks)
+    print(f"  pool sizes -> normal={len(X_normal)}, known={len(X_known)}, new={len(X_new)}")
+
+    # ---- Safety checks ----
+    if len(X_known) == 0:
+        raise ValueError(
+            "Known-attack pool is EMPTY. "
+            "Check that entries in 'known_attacks' match y_attack_type.unique()."
+        )
+    if len(X_new) == 0:
+        raise ValueError(
+            "New-attack pool is EMPTY. "
+            "Check that entries in 'new_attacks' match y_attack_type.unique()."
+        )
 
     return {
         "normal": (X_normal, y_normal),
         "known": (X_known, y_known),
         "new": (X_new, y_new),
     }
+
 
 
 def _sample_pool(

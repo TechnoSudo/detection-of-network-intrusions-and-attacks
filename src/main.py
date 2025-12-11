@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from .preprocessing import (
     load_and_prepare_kdd,
@@ -13,6 +14,7 @@ from .result import (
     save_scenario1_results,
     print_scenario2_results,
     save_scenario2_results,
+    plot_scenario1_radar,
     plot_scenario2_unseen_vs_all,
     plot_scenario3_batch_curves,
     summarize_scenario3_adaptation,
@@ -32,7 +34,8 @@ np.random.seed(RANDOM_SEED)
 
 # Paths to datasets
 KDD_PATH = "data/dataset-1/kddcup.data"
-NETFLOW_PATH = "data/dataset-2/train_net.csv"
+NETFLOW_PATH_TRAIN = "data/dataset-2/train_net.csv"
+NETFLOW_PATH_TEST = "data/dataset-2/test_net.csv"
 CORES_IOT_PATH = "data/dataset-3/cores_iot.csv"
 
 # datasets to run
@@ -53,29 +56,46 @@ def main() -> None:
         X_kdd, y_kdd, y_type_kdd = load_and_prepare_kdd(KDD_PATH)
 
     if RUN_NETFLOW:
-        X_nf, y_nf, y_type_nf = load_and_prepare_netflow(NETFLOW_PATH)
+        X_nf, y_nf, y_type_nf = load_and_prepare_netflow(NETFLOW_PATH_TRAIN)
 
     if RUN_CORES_IOT:
         X_iot, y_iot = load_and_prepare_cores_iot(CORES_IOT_PATH)
+
+
 
     # ## Scenario 1 – All attacks known
     # if RUN_KDD:
     #     s1_kdd_metrics = run_scenario_1(X_kdd, y_kdd)
     #     print_scenario1_results("KDD'99", s1_kdd_metrics)
     #     save_scenario1_results("KDD'99", s1_kdd_metrics, "results/kdd_s1.json")
-    #
+    #     plot_scenario1_radar(
+    #         metrics_per_model=s1_kdd_metrics,
+    #         dataset_name="KDD'99",
+    #         save_path="plots/kdd_s1_radar.png",
+    #     )
+
     # if RUN_NETFLOW:
     #     s1_nf_metrics = run_scenario_1(X_nf, y_nf)
     #     print_scenario1_results("NetFlow v9", s1_nf_metrics)
     #     save_scenario1_results("NetFlow v9", s1_nf_metrics, "results/netflow_s1.json")
-    #
+    #     plot_scenario1_radar(
+    #         metrics_per_model=s1_nf_metrics,
+    #         dataset_name="NetFlow v9",
+    #         save_path="plots/netflow_s1_radar.png",
+    #     )
+
     # if RUN_CORES_IOT:
     #     s1_iot_metrics = run_scenario_1(X_iot, y_iot)
     #     print_scenario1_results("CORES-IoT", s1_iot_metrics)
     #     save_scenario1_results("CORES-IoT", s1_iot_metrics, "results/cores_iot_s1.json")
-    #
-    #
-    #
+    #     plot_scenario1_radar(
+    #         metrics_per_model=s1_iot_metrics,
+    #         dataset_name="CORES-IoT",
+    #         save_path="plots/cores_iot_s1_radar.png",
+    #     )
+
+
+
     ## Scenario 2 – Some attacks appear only during testing
 
     # # KDD'99: known vs unseen attacks
@@ -108,28 +128,28 @@ def main() -> None:
 
 
     # NetFlow v9: known vs unseen categories
-    # if RUN_NETFLOW:
-    #     # Adjust strings if ANOMALY labels differ
-    #     known_nf = ["PortScan", "DoS"]
-    #     unseen_nf = ["Malware"]
-    #
-    #     print("\n[NetFlow v9] Scenario 2")
-    #     s2_nf_metrics = run_scenario_2_netflow(
-    #         X_nf,
-    #         y_nf,
-    #         y_type_nf,
-    #         known_attacks=known_nf,
-    #         unseen_attacks=unseen_nf,
-    #     )
-    #     print_scenario2_results("NetFlow v9", s2_nf_metrics, metric="f1")
-    #     save_scenario2_results("NetFlow v9", s2_nf_metrics, "results/netflow_s2.json")
-    #     plot_scenario2_unseen_vs_all(
-    #         s2_nf_metrics,
-    #         metric="f1",
-    #         dataset_name="NetFlow v9",
-    #         save_path="plots/netflow_s2_f1.png",
-    #     )
-    #
+    if RUN_NETFLOW:
+        
+        known_nf = ["Port Scanning", "Denial of Service"]
+        unseen_nf = ["Malware"]
+    
+        print("\n[NetFlow v9] Scenario 2")
+        s2_nf_metrics = run_scenario_2_netflow(
+            X_nf,
+            y_nf,
+            y_type_nf,
+            known_attacks=known_nf,
+            unseen_attacks=unseen_nf,
+        )
+        print_scenario2_results("NetFlow v9", s2_nf_metrics, metric="f1")
+        save_scenario2_results("NetFlow v9", s2_nf_metrics, "results/netflow_s2.json")
+        plot_scenario2_unseen_vs_all(
+            s2_nf_metrics,
+            metric="f1",
+            dataset_name="NetFlow v9",
+            save_path="plots/netflow_s2_f1.png",
+        )
+    
 
     ## Scenario 3 – Evolving attacks
 
@@ -184,9 +204,9 @@ def main() -> None:
 
     # # NetFlow v9 streaming
     # if RUN_NETFLOW:
-    #     known_nf = ["PortScan", "DoS"]
+    #     known_nf = ["Port Scanning", "Denial of Service"]
     #     new_nf = ["Malware"]
-    #
+    
     #     nf_pools = build_attack_pools(
     #         X_nf,
     #         y_nf,
@@ -194,7 +214,7 @@ def main() -> None:
     #         known_attacks=known_nf,
     #         new_attacks=new_nf,
     #     )
-    #
+    
     #     nf_batches = create_streaming_batches(
     #         nf_pools,
     #         batch_size=BATCH_SIZE,
@@ -202,12 +222,12 @@ def main() -> None:
     #         n_drift_onset=N_DRIFT_ONSET,
     #         n_post_drift=N_POST_DRIFT,
     #     )
-    #
+    
     #     s3_nf_batch_metrics = run_scenario_3_streaming(
     #         nf_batches,
     #         n_pre_drift=N_PRE_DRIFT,
     #     )
-    #
+    
     #     plot_scenario3_batch_curves(
     #         s3_nf_batch_metrics,
     #         metric="f1",
@@ -216,7 +236,7 @@ def main() -> None:
     #         dataset_name="NetFlow v9",
     #         save_path="plots/netflow_s3_f1.png",
     #     )
-    #
+    
     #     nf_summary = summarize_scenario3_adaptation(
     #         s3_nf_batch_metrics,
     #         metric="f1",

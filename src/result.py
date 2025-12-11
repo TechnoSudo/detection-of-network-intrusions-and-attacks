@@ -18,13 +18,16 @@ def save_json(obj: Any, save_path: str) -> None:
         json.dump(obj, f, indent=2)
 
 
-def print_scenario1_results(
-    dataset_name: str,
-    metrics: Dict[str, float],
-) -> None:
+## Printing json results
+
+def print_scenario1_results(dataset_name: str,
+                            metrics_per_model: Dict[str, Dict[str, float]]) -> None:
     print(f"\n[Scenario 1] Dataset: {dataset_name}")
-    for k, v in metrics.items():
-        print(f"  {k:>9}: {v:.4f}")
+
+    for model_name, model_metrics in metrics_per_model.items():
+        print(f"\n  Model: {model_name}")
+        for metric_name, value in model_metrics.items():
+            print(f"    {metric_name:>10}: {value:.4f}")
 
 
 def save_scenario1_results(
@@ -66,6 +69,56 @@ def save_scenario2_results(
         "metrics_per_model": metrics_per_model,
     }
     save_json(payload, save_path)
+
+
+## Print plots
+
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict
+
+def plot_scenario1_radar(
+    metrics_per_model: Dict[str, Dict[str, float]],
+    dataset_name: str,
+    save_path: str = None,
+) -> None:
+
+    # Order of metrics around the circle
+    metric_names = ["f1", "precision", "recall", "bac"]
+    num_metrics = len(metric_names)
+
+    # Angles for each metric axis
+    angles = np.linspace(0, 2 * np.pi, num_metrics, endpoint=False)
+    angles = np.concatenate([angles, [angles[0]]])  # close the loop
+
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_subplot(111, polar=True)
+
+    # Plot one polygon per model
+    for model_name, m in metrics_per_model.items():
+        values = [m[metric] for metric in metric_names]
+        values.append(values[0])  # close the polygon
+
+        ax.plot(angles, values, linewidth=1.5, label=model_name)
+        ax.fill(angles, values, alpha=0.1)
+
+    # Set category labels
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels([name.upper() for name in metric_names])
+
+    # Limit from 0 to 1 since all metrics are in [0, 1]
+    ax.set_ylim(0.0, 1.0)
+
+    ax.set_title(f"Scenario 1 – {dataset_name}", pad=20)
+    ax.grid(True)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.25, 1.1))
+
+    plt.tight_layout()
+
+    if save_path is not None:
+        plt.savefig(save_path, dpi=300)
+    else:
+        plt.show()
 
 
 def plot_scenario2_unseen_vs_all(

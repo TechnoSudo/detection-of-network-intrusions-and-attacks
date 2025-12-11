@@ -1,31 +1,17 @@
 import numpy as np
 
-from .preprocessing import (
+from preprocessing import (
     load_and_prepare_kdd,
     load_and_prepare_netflow,
     load_and_prepare_cores_iot,
 )
-
-from .streaming import build_attack_pools, create_streaming_batches
-
-from .result import (
+from result import (
     print_scenario1_results,
-    save_scenario1_results,
-    print_scenario2_results,
-    save_scenario2_results,
-    plot_scenario2_unseen_vs_all,
-    plot_scenario3_batch_curves,
-    summarize_scenario3_adaptation,
-    print_scenario3_summary,
-    save_scenario3_summary,
+    save_scenario1_results, print_scenario2_results, save_scenario2_results, plot_scenario2_unseen_vs_all,
 )
-from .scenarios import (
-    run_scenario_1,
-    run_scenario_2_kdd,
-    run_scenario_2_netflow,
-    run_scenario_3_streaming,
+from scenarios import (
+    run_scenario_1, run_scenario_2_kdd,
 )
-
 
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
@@ -36,8 +22,8 @@ NETFLOW_PATH = "data/dataset-2/train_net.csv"
 CORES_IOT_PATH = "data/dataset-3/cores_iot.csv"
 
 # datasets to run
-RUN_KDD = False
-RUN_NETFLOW = True
+RUN_KDD = True
+RUN_NETFLOW = False
 RUN_CORES_IOT = False
 
 # Scenario 3 streaming config
@@ -58,7 +44,7 @@ def main() -> None:
     if RUN_CORES_IOT:
         X_iot, y_iot = load_and_prepare_cores_iot(CORES_IOT_PATH)
 
-    # ## Scenario 1 – All attacks known
+    ## Scenario 1 – All attacks known
     # if RUN_KDD:
     #     s1_kdd_metrics = run_scenario_1(X_kdd, y_kdd)
     #     print_scenario1_results("KDD'99", s1_kdd_metrics)
@@ -73,38 +59,38 @@ def main() -> None:
     #     s1_iot_metrics = run_scenario_1(X_iot, y_iot)
     #     print_scenario1_results("CORES-IoT", s1_iot_metrics)
     #     save_scenario1_results("CORES-IoT", s1_iot_metrics, "results/cores_iot_s1.json")
-    #
-    #
-    #
-    ## Scenario 2 – Some attacks appear only during testing
 
-    # # KDD'99: known vs unseen attacks
-    # if RUN_KDD:
-    #     known_kdd = [
-    #         "back", "land", "neptune", "pod", "smurf", "teardrop",      # DoS
-    #         "ipsweep", "nmap", "portsweep", "satan"                     # Probe
-    #     ]
-    #     unseen_kdd = [
-    #         "buffer_overflow", "loadmodule", "perl", "rootkit",        # U2R
-    #         "ftp_write", "guess_passwd", "imap", "multihop", "phf",
-    #         "spy", "warezclient", "warezmaster"                        # R2L
-    #     ]
-    #     s2_kdd_metrics = run_scenario_2_kdd(
-    #         X_kdd,
-    #         y_kdd,
-    #         y_type_kdd,
-    #         known_attacks=known_kdd,
-    #         unseen_attacks=unseen_kdd,
-    #     )
-    #     print_scenario2_results("KDD'99", s2_kdd_metrics, metric="f1")
-    #     save_scenario2_results("KDD'99", s2_kdd_metrics, "results/kdd_s2.json")
-    #     plot_scenario2_unseen_vs_all(
-    #         s2_kdd_metrics,
-    #         metric="f1",
-    #         dataset_name="KDD'99",
-    #         save_path="plots/kdd_s2_f1.png",
-    #     )
-    #
+
+
+    # Scenario 2 – Some attacks appear only during testing
+
+    # KDD'99: known vs unseen attacks
+    if RUN_KDD:
+        known_kdd = [
+            "back", "land", "neptune", "pod", "smurf", "teardrop",
+            "ipsweep", "nmap", "portsweep", "satan", "buffer_overflow", "loadmodule", "perl", "rootkit",
+            "ftp_write", "guess_passwd", "imap"
+        ]
+        unseen_kdd = [
+            "multihop", "phf",
+            "spy", "warezclient", "warezmaster"
+        ]
+        s2_kdd_metrics = run_scenario_2_kdd(
+            X_kdd,
+            y_kdd,
+            y_type_kdd,
+            known_attacks=known_kdd,
+            unseen_attacks=unseen_kdd,
+        )
+        print_scenario2_results("KDD'99", s2_kdd_metrics, metric="f1")
+        save_scenario2_results("KDD'99", s2_kdd_metrics, "results/kdd_s2.json")
+        plot_scenario2_unseen_vs_all(
+            s2_kdd_metrics,
+            metric="f1",
+            dataset_name="KDD'99",
+            save_path="plots/kdd_s2_f1.png",
+        )
+
 
 
     # NetFlow v9: known vs unseen categories

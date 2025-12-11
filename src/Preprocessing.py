@@ -29,14 +29,6 @@ def encode_protocol(df):
     return df
 
 def split_train_test(df, test_columns):
-    """
-    df: pandas DataFrame
-    test_columns: can be:
-        - list of column names
-        - list of column indices
-        - mixed list of indices + names
-        - single name or single index
-    """
     # Convert single element
     if not isinstance(test_columns, (list, tuple, set)):
         test_columns = [test_columns]

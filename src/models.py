@@ -55,6 +55,14 @@ def train_offline_models(
     models["sgd"].fit(X_train, y_train)
     return models
 
+def retrain_offline_models(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    models
+) -> ModelBundle:
+    models["sgd"].partial_fit(X_train, y_train)
+    return models
+
 
 def predict_all_models(
     models: ModelBundle,

@@ -3,10 +3,6 @@ import Preprocessing as prep
 
 
 def main():
-    loader = DatasetLoader(
-        dataset_1_path="data/set-2/train_net.csv",
-        dataset_2_path="data/set-3/cores_iot.csv"
-    )
 
     batch_size = 10
 

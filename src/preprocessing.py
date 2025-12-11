@@ -62,7 +62,6 @@ def load_and_prepare_kdd(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Series]
 
     df = pd.read_csv(path, header=None, names=col_names)
 
-    # Strip trailing dots in labels like "normal."
     df["label"] = df["label"].str.strip().str.replace(".", "", regex=False)
 
     y_attack_type = df["label"].copy()
@@ -109,8 +108,10 @@ def load_and_prepare_netflow(path: str) -> Tuple[pd.DataFrame, pd.Series, pd.Ser
         "ID",
         "ANOMALY",
     ]
+
     drop_cols = [c for c in drop_cols if c in df.columns]
     df_features = df.drop(columns=drop_cols)
+    df_features = standardize(df_features)
 
     # Encode PROTOCOL_MAP if present
     if "PROTOCOL_MAP" in df_features.columns:
@@ -133,3 +134,20 @@ def load_and_prepare_cores_iot(path: str) -> Tuple[pd.DataFrame, pd.Series]:
     X = df.iloc[:, :-1].astype(float)
 
     return X, y
+
+
+def prep_column_ip_to_int(ip):
+    try:
+        parts = ip.split(".")
+        return (int(parts[0]) << 24) + (int(parts[1]) << 16) + (int(parts[2]) << 8) + int(parts[3])
+    except:
+        return 0
+
+
+def standardize(df):
+    df_numeric = df.select_dtypes(include=["number"])
+    df_non_numeric = df.select_dtypes(exclude=["number"])
+
+    df_numeric = (df_numeric - df_numeric.mean()) / df_numeric.std()
+
+    return pd.concat([df_numeric, df_non_numeric], axis=1)[df.columns]

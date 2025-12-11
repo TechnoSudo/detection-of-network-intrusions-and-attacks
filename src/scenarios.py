@@ -3,15 +3,15 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from .models import (
+from models import (
     ModelBundle,
     train_offline_models,
     predict_all_models,
     make_sgd_static_and_adaptive,
-    ensemble_predict_labels,
+    ensemble_predict_labels, retrain_offline_models,
 )
-from .metrics import compute_metrics
-from .preprocessing import preprocess_features
+from metrics import compute_metrics
+from preprocessing import preprocess_features
 
 
 RANDOM_STATE = 42
@@ -81,7 +81,6 @@ def run_scenario_2_kdd(
         X_train_std,
         y_train.values,
     )
-
     preds = predict_all_models(models, X_test_std)
 
     unseen_mask_test = y_type_test.isin(unseen_attacks).values
@@ -110,6 +109,38 @@ def run_scenario_2_kdd(
 
         print(f"\n{name} – ALL:    {metrics_all}")
         print(f"{name} – UNSEEN: {metrics_unseen}")
+
+    # X_train_partial, X_test_partial, _ = preprocess_features(X_train, X_test)
+    # models = retrain_offline_models(
+    #     X_train_partial[unseen_mask_test],
+    #     y_train.values[unseen_mask_test],
+    #     models=models,
+    # )
+    # preds_partial = predict_all_models(models, X_test_partial)
+    #
+    # for name, y_pred_all in preds_partial.items():
+    #     metrics_all = compute_metrics(y_test.values[unseen_mask_test], y_pred_all[unseen_mask_test])
+    #
+    #     if unseen_mask_test.sum() > 0:
+    #         y_true_u = y_test.values[unseen_mask_test]
+    #         y_pred_u = y_pred_all[unseen_mask_test]
+    #         metrics_unseen = compute_metrics(y_true_u, y_pred_u)
+    #     else:
+    #         metrics_unseen = {
+    #             "f1": np.nan,
+    #             "precision": np.nan,
+    #             "recall": np.nan,
+    #             "bac": np.nan,
+    #         }
+    #
+    #     metrics_per_model[name + "_partial"] = {
+    #         "all": metrics_all,
+    #         "unseen": metrics_unseen,
+    #     }
+    #
+    #     print(f"\n{name} – ALL:    {metrics_all}")
+    #     print(f"{name} – UNSEEN: {metrics_unseen}")
+
 
     return metrics_per_model
 

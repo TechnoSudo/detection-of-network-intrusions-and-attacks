@@ -3,15 +3,15 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from .models import (
+from ..models.models import (
     ModelBundle,
     train_offline_models,
     predict_all_models,
     make_sgd_static_and_adaptive,
     ensemble_predict_labels,
 )
-from .metrics import compute_metrics
-from .preprocessing import preprocess_features
+from ..evaluation.metrics import compute_metrics
+from ..preprocessing.preprocessing import preprocess_features
 
 
 RANDOM_STATE = 42

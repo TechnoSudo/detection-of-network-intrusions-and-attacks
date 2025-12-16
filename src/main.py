@@ -1,15 +1,15 @@
 import numpy as np
 import pandas as pd
 
-from .preprocessing import (
+from .preprocessing.preprocessing import (
     load_and_prepare_kdd,
     load_and_prepare_netflow,
     load_and_prepare_cores_iot,
 )
 
-from .streaming import build_attack_pools, create_streaming_batches
+from .scenarios.streaming import build_attack_pools, create_streaming_batches
 
-from .result import (
+from .evaluation.result import (
     print_scenario1_results,
     save_scenario1_results,
     print_scenario2_results,
@@ -21,7 +21,7 @@ from .result import (
     print_scenario3_summary,
     save_scenario3_summary,
 )
-from .scenarios import (
+from .preprocessing.scenarios import (
     run_scenario_1,
     run_scenario_2_kdd,
     run_scenario_2_netflow,

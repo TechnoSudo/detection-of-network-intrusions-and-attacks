@@ -27,24 +27,6 @@ def build_attack_pools(
     X_new = X.loc[is_new]
     y_new = y.loc[is_new]
 
-    # ---- Debug prints so you see what's going on ----
-    print("\n[DEBUG] build_attack_pools:")
-    print("  known_attacks =", known_attacks)
-    print("  new_attacks   =", new_attacks)
-    print(f"  pool sizes -> normal={len(X_normal)}, known={len(X_known)}, new={len(X_new)}")
-
-    # ---- Safety checks ----
-    if len(X_known) == 0:
-        raise ValueError(
-            "Known-attack pool is EMPTY. "
-            "Check that entries in 'known_attacks' match y_attack_type.unique()."
-        )
-    if len(X_new) == 0:
-        raise ValueError(
-            "New-attack pool is EMPTY. "
-            "Check that entries in 'new_attacks' match y_attack_type.unique()."
-        )
-
     return {
         "normal": (X_normal, y_normal),
         "known": (X_known, y_known),
@@ -58,9 +40,6 @@ def _sample_pool(
     y_pool: pd.Series,
     n_samples: int,
 ) -> Tuple[pd.DataFrame, pd.Series]:
-    """
-    Randomly sample 'n_samples' rows from a pool with replacement.
-    """
     idx = np.random.choice(len(X_pool), size=n_samples, replace=True)
     return X_pool.iloc[idx], y_pool.iloc[idx]
 

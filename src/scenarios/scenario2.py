@@ -12,7 +12,6 @@ from src.models.supervised.random_forest import RFModel
 from src.models.supervised.adaptive_sgd import AdaptiveSGDModel
 from src.models.supervised.xgboost import XGBModel
 from src.models.supervised.ensemble import WeightedSoftVotingEnsemble
-from src.models.anomaly.isolation_forest import IsolationForestAD, IsolationForestConfig
 
 
 ATTACK_CATEGORIES_KDD: Dict[str, List[str]] = {
@@ -211,11 +210,6 @@ def run_scenario2(
     outdir: str,
     sample_frac: float = 1.0,
     seed: int = 42,
-    use_anomaly: bool = False,
-    anomaly_contamination: float = 0.01,
-    anomaly_percentile: float = 99.0,
-    gate_with_anomaly: bool = False,
-    gate_conf_threshold: float = 0.65,
 ):
     print("\n" + "=" * 80)
     print(f"RUNNING SCENARIO 2 — UNSEEN ATTACK TYPES | Dataset: {dataset.upper()}")
@@ -269,15 +263,6 @@ def run_scenario2(
         cat_cols=cat_cols,
     )
 
-    # Fit anomaly detector on TRAIN ONLY (parallel signal)
-    anomaly = None
-    if use_anomaly:
-        anomaly = IsolationForestAD(
-            IsolationForestConfig(contamination=anomaly_contamination, random_state=seed)
-        )
-        anomaly.fit(Xtr)
-        print(f"[scenario2] anomaly detector fitted: {anomaly.info()}")
-
     # Train supervised models
     results = []
 
@@ -302,10 +287,9 @@ def run_scenario2(
     print("\nTraining Ensemble...")
     ensemble = WeightedSoftVotingEnsemble(models={"rf": rf, "sgd": sgd, "xgb": xgb})
     ensemble.fit(Xtr, ytr)
-
     y_pred_ens = ensemble.predict(Xte)
 
-    # Try to get ensemble proba (for PR curve + optional gating)
+    # Try to get ensemble proba (for PR curve)
     y_proba_ens: Optional[np.ndarray] = None
     if hasattr(ensemble, "predict_proba"):
         try:
@@ -317,35 +301,6 @@ def run_scenario2(
                 y_proba_ens = p
         except Exception:
             y_proba_ens = None
-
-    # Compute anomaly scores on TEST (parallel signal)
-    out_anom_csv: Optional[str] = None
-    anomaly_scores = None
-    anomaly_flags = None
-    if anomaly is not None:
-        anomaly_scores = anomaly.anomaly_score(Xte)
-        anomaly_flags = anomaly.is_anomaly(Xte, threshold=None, percentile=anomaly_percentile)
-
-        out_anom_csv = os.path.join(outdir, "anomaly_scores.csv")
-        pd.DataFrame({
-            "y_true": np.asarray(yte).astype(int),
-            "anomaly_score": anomaly_scores.astype(float),
-            "is_anomaly": anomaly_flags.astype(int),
-        }).to_csv(out_anom_csv, index=False)
-        print(f"[scenario2] saved anomaly scores -> {out_anom_csv}")
-
-        # optional stats print
-        print(f"[scenario2] anomaly flagged: {int(np.sum(anomaly_flags))}/{len(anomaly_flags)} "
-              f"({100.0*np.mean(anomaly_flags):.2f}%) at percentile={anomaly_percentile}")
-
-    if gate_with_anomaly and (anomaly_flags is not None) and (y_proba_ens is not None):
-        low_conf = (y_proba_ens < gate_conf_threshold)
-        override = low_conf & anomaly_flags
-        changed = int(np.sum(override))
-        if changed > 0:
-            y_pred_ens = np.asarray(y_pred_ens).copy()
-            y_pred_ens[override] = 1
-        print(f"[scenario2] gating enabled: changed {changed} predictions -> attack (1)")
 
     results.append({"model": "Ensemble", **compute_metrics(yte, y_pred_ens)})
 
@@ -367,15 +322,9 @@ def run_scenario2(
         f.write(", ".join(unknown_types) + "\n\n")
         f.write(f"Train rows: {len(X_train)} | Test rows: {len(X_test)}\n")
         f.write(f"Train positives: {int(np.sum(y_train))} | Train negatives: {len(y_train)-int(np.sum(y_train))}\n")
-        f.write(f"Test positives: {int(np.sum(y_test))} | Test negatives: {len(y_test)-int(np.sum(y_test))}\n\n")
-        f.write(f"Anomaly enabled: {use_anomaly}\n")
-        if use_anomaly:
-            f.write(f"Anomaly contamination: {anomaly_contamination}\n")
-            f.write(f"Anomaly percentile: {anomaly_percentile}\n")
-            f.write(f"Gating enabled: {gate_with_anomaly}\n")
-            f.write(f"Gating conf threshold: {gate_conf_threshold}\n")
+        f.write(f"Test positives: {int(np.sum(y_test))} | Test negatives: {len(y_test)-int(np.sum(y_test))}\n")
 
-    # Save arrays for plots (ensemble only, as before)
+    # Save arrays for plots (ensemble only)
     out_npz = os.path.join(outdir, "arrays_ensemble.npz")
     if y_proba_ens is None:
         np.savez(out_npz, y_true=np.asarray(yte), y_pred=np.asarray(y_pred_ens))
@@ -390,8 +339,6 @@ def run_scenario2(
     print(f"\nSaved: {out_csv}")
     print(f"Saved: {out_txt}")
     print(f"Saved: {out_npz}")
-    if out_anom_csv:
-        print(f"Saved: {out_anom_csv}")
 
     out = {
         "results_csv": out_csv,
@@ -400,7 +347,4 @@ def run_scenario2(
         "known_types": known_types,
         "unknown_types": unknown_types,
     }
-    if out_anom_csv:
-        out["anomaly_csv"] = out_anom_csv
-
     return out

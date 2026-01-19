@@ -84,23 +84,23 @@ def _plot_stream_multi(
         sub = df_metrics[df_metrics["model"] == model].sort_values("batch_idx")
         ax.plot(sub["batch_idx"], sub["f1_ema"], linewidth=2.2, label=model)
 
-    if not df_events.empty:
-        for det, marker, color in [
-            ("ADWIN", "x", "black"),
-            ("PageHinkley", "^", "dimgray"),
-        ]:
-            sub = df_events[df_events["detector"] == det]
-            if len(sub) > 0:
-                ax.scatter(
-                    sub["batch_idx"],
-                    np.full(len(sub), 0.98),
-                    marker=marker,
-                    color=color,
-                    s=70,
-                    linewidths=2,
-                    label=det,
-                    zorder=5,
-                )
+    # if not df_events.empty:
+    #     for det, marker, color in [
+    #         ("ADWIN", "x", "black"),
+    #         ("PageHinkley", "^", "dimgray"),
+    #     ]:
+    #         sub = df_events[df_events["detector"] == det]
+    #         if len(sub) > 0:
+    #             ax.scatter(
+    #                 sub["batch_idx"],
+    #                 np.full(len(sub), 0.98),
+    #                 marker=marker,
+    #                 color=color,
+    #                 s=70,
+    #                 linewidths=2,
+    #                 label=det,
+    #                 zorder=5,
+    #             )
 
     ax.set_title(title, fontsize=16)
     ax.set_xlabel("Batch index")

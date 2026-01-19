@@ -1,0 +1,27 @@
+name: intrusion-detection
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.10
+
+  # Core
+  - numpy
+  - pandas
+  - scipy
+
+  # ML
+  - scikit-learn>=1.2
+  - xgboost>=1.7
+  - imbalanced-learn
+  - river
+
+  # Plotting & utils
+  - matplotlib
+  - tqdm
+  - joblib
+  - pyyaml
+  - jinja2
+
+  - pip

@@ -1,0 +1,13 @@
+numpy
+pandas
+scipy
+
+scikit-learn>=1.2
+xgboost>=1.7
+imbalanced-learn
+river
+
+matplotlib
+tqdm
+joblib
+pyyaml

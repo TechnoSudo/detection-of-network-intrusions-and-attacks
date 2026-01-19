@@ -1,0 +1,14 @@
+Dataset: kdd
+Seed: 42
+Subset fraction used: 1.0
+Within subset: train=60% (==30% of full), test=40% (==20% of full)
+
+Known attack types (18):
+back, buffer_overflow, ftp_write, guess_passwd, imap, ipsweep, land, loadmodule, multihop, neptune, perl, phf, pod, portsweep, satan, smurf, spy, warezmaster
+
+Unknown attack types (4):
+teardrop, nmap, warezclient, rootkit
+
+Train rows: 2939058 | Test rows: 393438
+Train positives: 2355390 | Train negatives: 583668
+Test positives: 4325 | Test negatives: 389113

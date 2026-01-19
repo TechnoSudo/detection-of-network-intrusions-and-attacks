@@ -1,0 +1,20 @@
+Dataset: netflow
+Seed: 42
+Subset fraction used: 1.0
+Within subset: train=60%, test=40%
+
+Known attack types (2):
+Port Scanning, Denial of Service
+
+Unknown attack types (1):
+Malware
+
+Train rows: 2530575 | Test rows: 1463988
+Train positives: 335175 | Train negatives: 2195400
+Test positives: 388 | Test negatives: 1463600
+
+Anomaly enabled: True
+Anomaly contamination: 0.01
+Anomaly percentile: 99.0
+Gating enabled: False
+Gating conf threshold: 0.65

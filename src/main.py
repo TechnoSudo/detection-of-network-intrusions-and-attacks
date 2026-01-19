@@ -1,252 +1,150 @@
-import numpy as np
-import pandas as pd
+from __future__ import annotations
 
-from .preprocessing.preprocessing import (
-    load_and_prepare_kdd,
-    load_and_prepare_netflow,
-    load_and_prepare_cores_iot,
-)
+import argparse
+import os
+from datetime import datetime
+from typing import Dict, Any, Optional
 
-from .scenarios.streaming import build_attack_pools, create_streaming_batches
+from src.scenarios.scenario1 import run_scenario1
+from src.scenarios.scenario2 import run_scenario2
+from src.scenarios.scenario3 import run_scenario3
 
-from .evaluation.result import (
-    print_scenario1_results,
-    save_scenario1_results,
-    print_scenario2_results,
-    save_scenario2_results,
-    plot_scenario1_radar,
-    plot_scenario2_unseen_vs_all,
-    plot_scenario3_batch_curves,
-    summarize_scenario3_adaptation,
-    print_scenario3_summary,
-    save_scenario3_summary,
-)
-from .preprocessing.scenarios import (
-    run_scenario_1,
-    run_scenario_2_kdd,
-    run_scenario_2_netflow,
-    run_scenario_3_streaming,
+from src.evaluation.plots import (
+    plot_model_metrics,
+    plot_confusion,
+    plot_prec_recall,
 )
 
 
-RANDOM_SEED = 42
-np.random.seed(RANDOM_SEED)
+def _make_run_dir(scenario: int, dataset: str) -> Dict[str, str]:
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join("results", f"scenario{scenario}", dataset, ts)
+    plots_dir = os.path.join(run_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+    return {"run_dir": run_dir, "plots_dir": plots_dir}
 
-# Paths to datasets
-KDD_PATH = "data/dataset-1/kddcup.data"
-NETFLOW_PATH_TRAIN = "data/dataset-2/train_net.csv"
-NETFLOW_PATH_TEST = "data/dataset-2/test_net.csv"
-CORES_IOT_PATH = "data/dataset-3/cores_iot.csv"
 
-# datasets to run
-RUN_KDD = False
-RUN_NETFLOW = True
-RUN_CORES_IOT = False
+def _run_plots_from_npz(run_info: Dict[str, Any], plots_dir: str) -> None:
+    npz_map = run_info.get("npz", {})
+    npz_path: Optional[str] = None
 
-# Scenario 3 streaming config
-BATCH_SIZE = 300
-N_PRE_DRIFT = 10
-N_DRIFT_ONSET = 10
-N_POST_DRIFT = 10
+    if isinstance(npz_map, dict) and len(npz_map) > 0:
+        npz_path = npz_map.get("ensemble") or next(iter(npz_map.values()), None)
+
+    if npz_path and os.path.exists(npz_path):
+        plot_confusion(npz_path, outdir=plots_dir, title="Confusion Matrix")
+        try:
+            plot_prec_recall(npz_path, outdir=plots_dir, title="Precision-Recall Curve")
+        except Exception as e:
+            print(f"[main] PR curve skipped: {e}")
+    else:
+        print("[main] No .npz arrays found; skipping confusion/PR plots.")
 
 
 def main() -> None:
-    # Load datasets
-    if RUN_KDD:
-        X_kdd, y_kdd, y_type_kdd = load_and_prepare_kdd(KDD_PATH)
+    parser = argparse.ArgumentParser(description="Run scenarios + auto-generate plots into results/")
 
-    if RUN_NETFLOW:
-        X_nf, y_nf, y_type_nf = load_and_prepare_netflow(NETFLOW_PATH_TRAIN)
+    parser.add_argument("--scenario", type=int, required=True, choices=[1, 2, 3])
+    parser.add_argument("--dataset", type=str, required=True, choices=["kdd", "nsl", "netflow", "iot"])
 
-    if RUN_CORES_IOT:
-        X_iot, y_iot = load_and_prepare_cores_iot(CORES_IOT_PATH)
+    parser.add_argument("--sample-frac", type=float, default=1.0)
+    parser.add_argument("--seed", type=int, default=42)
 
+    parser.add_argument("--n-pre", type=int, default=10)
+    parser.add_argument("--n-drift", type=int, default=10)
+    parser.add_argument("--n-post", type=int, default=10)
+    parser.add_argument("--batch-size", type=int, default=2000)
 
+    parser.add_argument(
+        "--drift-type",
+        type=str,
+        default="incremental",
+        choices=["sudden", "incremental", "gradual"],
+        help="Scenario3 drift schedule type",
+    )
+    parser.add_argument("--change-point", type=int, default=10, help="Sudden drift: batch where drift starts")
+    parser.add_argument("--start-t", type=int, default=10, help="Incremental/gradual: ramp start batch")
+    parser.add_argument("--end-t", type=int, default=19, help="Incremental/gradual: ramp end batch")
+    parser.add_argument("--min-intensity", type=float, default=0.0)
+    parser.add_argument("--max-intensity", type=float, default=1.0)
+    parser.add_argument("--min-mix", type=float, default=0.0, help="Gradual: affected fraction at start")
+    parser.add_argument("--max-mix", type=float, default=1.0, help="Gradual: affected fraction at end")
 
-    # ## Scenario 1 – All attacks known
-    # if RUN_KDD:
-    #     s1_kdd_metrics = run_scenario_1(X_kdd, y_kdd)
-    #     print_scenario1_results("KDD'99", s1_kdd_metrics)
-    #     save_scenario1_results("KDD'99", s1_kdd_metrics, "results/kdd_s1.json")
-    #     plot_scenario1_radar(
-    #         metrics_per_model=s1_kdd_metrics,
-    #         dataset_name="KDD'99",
-    #         save_path="plots/kdd_s1_radar.png",
-    #     )
+    args = parser.parse_args()
 
-    # if RUN_NETFLOW:
-    #     s1_nf_metrics = run_scenario_1(X_nf, y_nf)
-    #     print_scenario1_results("NetFlow v9", s1_nf_metrics)
-    #     save_scenario1_results("NetFlow v9", s1_nf_metrics, "results/netflow_s1.json")
-    #     plot_scenario1_radar(
-    #         metrics_per_model=s1_nf_metrics,
-    #         dataset_name="NetFlow v9",
-    #         save_path="plots/netflow_s1_radar.png",
-    #     )
+    dirs = _make_run_dir(args.scenario, args.dataset)
+    run_dir, plots_dir = dirs["run_dir"], dirs["plots_dir"]
 
-    # if RUN_CORES_IOT:
-    #     s1_iot_metrics = run_scenario_1(X_iot, y_iot)
-    #     print_scenario1_results("CORES-IoT", s1_iot_metrics)
-    #     save_scenario1_results("CORES-IoT", s1_iot_metrics, "results/cores_iot_s1.json")
-    #     plot_scenario1_radar(
-    #         metrics_per_model=s1_iot_metrics,
-    #         dataset_name="CORES-IoT",
-    #         save_path="plots/cores_iot_s1_radar.png",
-    #     )
+    print("\n" + "=" * 90)
+    print(f"RUN: scenario{args.scenario} | dataset={args.dataset}")
+    print(f"Run dir: {run_dir}")
+    print("=" * 90)
 
+    run_info: Dict[str, Any] = {}
 
-
-    ## Scenario 2 – Some attacks appear only during testing
-
-    # # KDD'99: known vs unseen attacks
-    # if RUN_KDD:
-    #     known_kdd = [
-    #         "back", "land", "neptune", "pod", "smurf", "teardrop",      # DoS
-    #         "ipsweep", "nmap", "portsweep", "satan"                     # Probe
-    #     ]
-    #     unseen_kdd = [
-    #         "buffer_overflow", "loadmodule", "perl", "rootkit",        # U2R
-    #         "ftp_write", "guess_passwd", "imap", "multihop", "phf",
-    #         "spy", "warezclient", "warezmaster"                        # R2L
-    #     ]
-    #     s2_kdd_metrics = run_scenario_2_kdd(
-    #         X_kdd,
-    #         y_kdd,
-    #         y_type_kdd,
-    #         known_attacks=known_kdd,
-    #         unseen_attacks=unseen_kdd,
-    #     )
-    #     print_scenario2_results("KDD'99", s2_kdd_metrics, metric="f1")
-    #     save_scenario2_results("KDD'99", s2_kdd_metrics, "results/kdd_s2.json")
-    #     plot_scenario2_unseen_vs_all(
-    #         s2_kdd_metrics,
-    #         metric="f1",
-    #         dataset_name="KDD'99",
-    #         save_path="plots/kdd_s2_f1.png",
-    #     )
-    #
-
-
-    # NetFlow v9: known vs unseen categories
-    if RUN_NETFLOW:
-        
-        known_nf = ["Port Scanning", "Denial of Service"]
-        unseen_nf = ["Malware"]
-    
-        print("\n[NetFlow v9] Scenario 2")
-        s2_nf_metrics = run_scenario_2_netflow(
-            X_nf,
-            y_nf,
-            y_type_nf,
-            known_attacks=known_nf,
-            unseen_attacks=unseen_nf,
+    if args.scenario == 1:
+        run_info = run_scenario1(
+            dataset=args.dataset,
+            outdir=run_dir,
+            sample_frac=args.sample_frac,
+            seed=args.seed,
         )
-        print_scenario2_results("NetFlow v9", s2_nf_metrics, metric="f1")
-        save_scenario2_results("NetFlow v9", s2_nf_metrics, "results/netflow_s2.json")
-        plot_scenario2_unseen_vs_all(
-            s2_nf_metrics,
-            metric="f1",
-            dataset_name="NetFlow v9",
-            save_path="plots/netflow_s2_f1.png",
+
+        print("\n[main] Scenario 1 finished. Generating plots...")
+        results_csv = run_info.get("results_csv")
+        if results_csv and os.path.exists(results_csv):
+            plot_model_metrics(results_csv, outdir=plots_dir)
+        _run_plots_from_npz(run_info, plots_dir)
+
+    elif args.scenario == 2:
+        run_info = run_scenario2(
+            dataset=args.dataset,
+            outdir=run_dir,
+            sample_frac=args.sample_frac,
+            seed=args.seed,
         )
-    
 
-    ## Scenario 3 – Evolving attacks
+        print("\n[main] Scenario 2 finished. Generating plots...")
+        results_csv = run_info.get("results_csv")
+        if results_csv and os.path.exists(results_csv):
+            plot_model_metrics(results_csv, outdir=plots_dir)
+        _run_plots_from_npz(run_info, plots_dir)
 
-    # KDD'99 streaming
-    # if RUN_KDD:
-    #     known_kdd = [
-    #         "back", "land", "neptune", "pod", "smurf", "teardrop",
-    #         "ipsweep", "nmap", "portsweep", "satan"
-    #     ]
-    #     new_kdd = [
-    #         "ftp_write", "guess_passwd", "imap", "multihop", "phf",
-    #         "spy", "warezclient", "warezmaster", "buffer_overflow",
-    #         "loadmodule", "perl", "rootkit"
-    #     ]
-    #
-    #     kdd_pools = build_attack_pools(
-    #         X_kdd,
-    #         y_kdd,
-    #         y_type_kdd,
-    #         known_attacks=known_kdd,
-    #         new_attacks=new_kdd,
-    #     )
-    #
-    #     kdd_batches = create_streaming_batches(
-    #         kdd_pools,
-    #         batch_size=BATCH_SIZE,
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #         n_post_drift=N_POST_DRIFT,
-    #     )
-    #
-    #     s3_kdd_batch_metrics = run_scenario_3_streaming(
-    #         kdd_batches,
-    #         n_pre_drift=N_PRE_DRIFT,
-    #     )
-    #     plot_scenario3_batch_curves(
-    #         s3_kdd_batch_metrics,
-    #         metric="f1",
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #         dataset_name="KDD'99",
-    #         save_path="plots/kdd_s3_f1.png",
-    #     )
-    #     kdd_summary = summarize_scenario3_adaptation(
-    #         s3_kdd_batch_metrics,
-    #         metric="f1",
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #     )
-    #     print_scenario3_summary("KDD'99", kdd_summary, metric="f1")
-    #     save_scenario3_summary("KDD'99", kdd_summary, "results/kdd_s3.json")
+    elif args.scenario == 3:
+        run_info = run_scenario3(
+            dataset=args.dataset,
+            outdir=run_dir,
+            seed=args.seed,
+            sample_frac=args.sample_frac,
+            n_pre=args.n_pre,
+            n_drift=args.n_drift,
+            n_post=args.n_post,
+            batch_size=args.batch_size,
+            drift_type=args.drift_type,
+            change_point=args.change_point,
+            start_t=args.start_t,
+            end_t=args.end_t,
+            min_intensity=args.min_intensity,
+            max_intensity=args.max_intensity,
+            min_mix=args.min_mix,
+            max_mix=args.max_mix,
+        )
+        print("\n[main] Scenario 3 finished. (Scenario 3 saves its own drift plot + CSVs.)")
 
-    # # NetFlow v9 streaming
-    # if RUN_NETFLOW:
-    #     known_nf = ["Port Scanning", "Denial of Service"]
-    #     new_nf = ["Malware"]
-    
-    #     nf_pools = build_attack_pools(
-    #         X_nf,
-    #         y_nf,
-    #         y_type_nf,
-    #         known_attacks=known_nf,
-    #         new_attacks=new_nf,
-    #     )
-    
-    #     nf_batches = create_streaming_batches(
-    #         nf_pools,
-    #         batch_size=BATCH_SIZE,
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #         n_post_drift=N_POST_DRIFT,
-    #     )
-    
-    #     s3_nf_batch_metrics = run_scenario_3_streaming(
-    #         nf_batches,
-    #         n_pre_drift=N_PRE_DRIFT,
-    #     )
-    
-    #     plot_scenario3_batch_curves(
-    #         s3_nf_batch_metrics,
-    #         metric="f1",
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #         dataset_name="NetFlow v9",
-    #         save_path="plots/netflow_s3_f1.png",
-    #     )
-    
-    #     nf_summary = summarize_scenario3_adaptation(
-    #         s3_nf_batch_metrics,
-    #         metric="f1",
-    #         n_pre_drift=N_PRE_DRIFT,
-    #         n_drift_onset=N_DRIFT_ONSET,
-    #     )
-    #     print_scenario3_summary("NetFlow v9", nf_summary, metric="f1")
-    #     save_scenario3_summary("NetFlow v9", nf_summary, "results/netflow_s3.json")
+    print("\n" + "-" * 90)
+    print("DONE.")
+    print(f"Results folder: {run_dir}")
+    print(f"Plots folder  : {plots_dir}")
 
-    # # CORES-IoT Scenario 3 streaming with drift
+    if isinstance(run_info, dict):
+        if "plot_png" in run_info:
+            print(f"Main plot     : {run_info['plot_png']}")
+        if "results_csv" in run_info:
+            print(f"Results CSV   : {run_info['results_csv']}")
+        if "metrics_csv" in run_info:
+            print(f"Metrics CSV   : {run_info['metrics_csv']}")
+        if "events_csv" in run_info:
+            print(f"Events CSV    : {run_info['events_csv']}")
 
 
 if __name__ == "__main__":

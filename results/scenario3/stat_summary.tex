@@ -1,0 +1,42 @@
+\begin{tabular}{llllrllrll}
+\toprule
+dataset & drift & A & B & n\_batches\_used & p\_value & p\_holm & significant & median\_diff(A-B) & cliffs\_delta \\
+\midrule
+kdd & gradual & ensemble & rf & 30 & 0.00665 & 0.0332 & True & 0.0256 & 0.164 \\
+kdd & gradual & ensemble & sgd\_static & 30 & 3.79e-06 & 0.0001251 & True & 0.0055 & 0.260 \\
+kdd & gradual & ensemble & xgb & 30 & 0.0001134 & 0.002836 & True & 0.1162 & 0.298 \\
+kdd & gradual & sgd\_adaptive & sgd\_static & 30 & 6.044e-05 & 0.001571 & True & 0.2146 & 0.592 \\
+kdd & incremental & ensemble & rf & 30 & 0.005104 & 0.0332 & True & 0.0371 & 0.171 \\
+kdd & incremental & ensemble & sgd\_static & 30 & 0.5291 & 0.5291 & False & 0.0004 & 0.109 \\
+kdd & incremental & ensemble & xgb & 30 & 0.0001134 & 0.002836 & True & 0.3401 & 0.324 \\
+kdd & incremental & sgd\_adaptive & sgd\_static & 30 & 2.603e-05 & 0.0007027 & True & 0.2877 & 0.739 \\
+kdd & sudden & ensemble & rf & 30 & 0.0003133 & 0.006894 & True & -0.0009 & -0.116 \\
+kdd & sudden & ensemble & sgd\_static & 30 & 1.733e-06 & 5.893e-05 & True & 0.6138 & 0.484 \\
+kdd & sudden & ensemble & xgb & 30 & 0.0001134 & 0.002836 & True & 0.2943 & 0.322 \\
+kdd & sudden & sgd\_adaptive & sgd\_static & 30 & 7.23e-06 & 0.0002241 & True & 0.9860 & 0.777 \\
+netflow & gradual & ensemble & rf & 30 & 0.001474 & 0.03095 & True & 0.0000 & -0.141 \\
+netflow & gradual & ensemble & sgd\_static & 30 & 0.001474 & 0.03095 & True & 0.0000 & 0.188 \\
+netflow & gradual & ensemble & xgb & 30 & 0.001474 & 0.03095 & True & 0.0000 & -0.119 \\
+netflow & gradual & sgd\_adaptive & sgd\_static & 30 & 1.725e-05 & 0.0005003 & True & 0.9908 & 0.880 \\
+netflow & incremental & ensemble & rf & 30 & 0.001474 & 0.03095 & True & 0.0000 & -0.141 \\
+netflow & incremental & ensemble & sgd\_static & 30 & 0.001474 & 0.03095 & True & 0.0000 & 0.188 \\
+netflow & incremental & ensemble & xgb & 30 & 0.001474 & 0.03095 & True & 0.0000 & -0.119 \\
+netflow & incremental & sgd\_adaptive & sgd\_static & 30 & 1.389e-05 & 0.0004167 & True & 0.9980 & 0.880 \\
+netflow & sudden & ensemble & rf & 30 & 0.003608 & 0.0332 & True & 0.0168 & 0.180 \\
+netflow & sudden & ensemble & sgd\_static & 30 & 0.002766 & 0.0332 & True & -0.0809 & -0.133 \\
+netflow & sudden & ensemble & xgb & 30 & 0.003608 & 0.0332 & True & 0.0168 & 0.202 \\
+netflow & sudden & sgd\_adaptive & sgd\_static & 30 & 1.769e-05 & 0.0005003 & True & 0.8516 & 0.892 \\
+nsl & gradual & ensemble & rf & 30 & 0.002766 & 0.0332 & True & 0.2016 & 0.164 \\
+nsl & gradual & ensemble & sgd\_static & 30 & 3.725e-09 & 1.341e-07 & True & 0.0098 & 0.309 \\
+nsl & gradual & ensemble & xgb & 30 & 0.005383 & 0.0332 & True & 0.0331 & 0.158 \\
+nsl & gradual & sgd\_adaptive & sgd\_static & 30 & 0.002216 & 0.03095 & True & 0.0382 & 0.397 \\
+nsl & incremental & ensemble & rf & 30 & 0.002766 & 0.0332 & True & 0.8920 & 0.164 \\
+nsl & incremental & ensemble & sgd\_static & 30 & 0.002188 & 0.03095 & True & 0.0052 & 0.293 \\
+nsl & incremental & ensemble & xgb & 30 & 0.001864 & 0.03095 & True & 0.2219 & 0.200 \\
+nsl & incremental & sgd\_adaptive & sgd\_static & 30 & 0.07802 & 0.156 & False & 0.0036 & 0.348 \\
+nsl & sudden & ensemble & rf & 30 & 0.002766 & 0.0332 & True & 0.4620 & 0.164 \\
+nsl & sudden & ensemble & sgd\_static & 30 & 4.422e-06 & 0.0001415 & True & 0.0097 & 0.429 \\
+nsl & sudden & ensemble & xgb & 30 & 2.608e-08 & 9.127e-07 & True & -0.0053 & -0.398 \\
+nsl & sudden & sgd\_adaptive & sgd\_static & 30 & 0.04787 & 0.1436 & False & 0.0036 & 0.474 \\
+\bottomrule
+\end{tabular}

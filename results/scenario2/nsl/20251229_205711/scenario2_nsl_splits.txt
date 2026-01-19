@@ -1,0 +1,15 @@
+Dataset: nsl
+Seed: 42
+Subset fraction used: 0.5
+Known attack fraction (of attack types): 0.7
+Within subset: train=60% (==30% of full), test=40% (==20% of full)
+
+Known attack types (15):
+back, guess_passwd, ipsweep, land, loadmodule, neptune, nmap, perl, phf, portsweep, rootkit, satan, smurf, spy, warezmaster
+
+Unknown attack types (7):
+buffer_overflow, ftp_write, imap, multihop, pod, teardrop, warezclient
+
+Train rows: 37791 | Test rows: 14450
+Train positives: 17643 | Train negatives: 20148
+Test positives: 1017 | Test negatives: 13433
